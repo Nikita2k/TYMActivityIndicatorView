@@ -13,23 +13,12 @@
 @property (nonatomic, assign) BOOL animating;
 @property (nonatomic, strong) UIImageView *indicatorImageView;
 @property (nonatomic, strong) UIImageView *backgroundImageView;
-
+@property (nonatomic, strong) UIView *backgroundView;
 @end
 
 @implementation TYMActivityIndicatorView
 
 #pragma mark - Accessors
-
-@synthesize animating = _animating;
-@synthesize indicatorImage = _indicatorImage;
-@synthesize backgroundImage = _backgroundImage;
-@synthesize indicatorImageView = _indicatorImageView;
-@synthesize backgroundImageView = _backgroundImageView;
-@synthesize hidesWhenStopped = _hidesWhenStopped;
-@synthesize fullRotationDuration = _fullRotationDuration;
-@synthesize progress = _progress;
-@synthesize minProgressUnit = _minProgressUnit;
-@synthesize activityIndicatorViewStyle = _activityIndicatorViewStyle;
 
 - (UIImageView *)backgroundImageView
 {
@@ -40,6 +29,16 @@
     return _backgroundImageView;
 }
 
+- (UIView *) backgroundView {
+    if (!_backgroundView) {
+        _backgroundView = [[UIImageView alloc] initWithFrame:CGRectMake(-50, -50, 100, 100)];
+        _backgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        _backgroundView.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.5];
+        _backgroundView.layer.cornerRadius = 10;
+    }
+    
+    return _backgroundView;
+}
 
 - (UIImageView *)indicatorImageView
 {
@@ -84,17 +83,26 @@
             break;
     }
     
-    _backgroundImage = [UIImage imageNamed:backgroundImageName];
-    _indicatorImage = [UIImage imageNamed:indicatorImageName];
-    self.backgroundImageView.image = _backgroundImage;
-    self.indicatorImageView.image = _indicatorImage;
-    [self setNeedsLayout];
+    self.backgroundImage = [UIImage imageNamed:backgroundImageName];
+    self.indicatorImage = [UIImage imageNamed:indicatorImageName];
 }
 
 
 - (BOOL)isAnimating
 {
     return self.animating;
+}
+
+
+#pragma mark - NSObject
+
++ (void)initialize
+{
+    if (self == [TYMActivityIndicatorView class]) {
+        TYMActivityIndicatorView *appearance = [self appearance];
+        [appearance setFullRotationDuration:1.0f];
+        [appearance setMinProgressUnit:0.01f];
+    }
 }
 
 
@@ -122,6 +130,14 @@
 {
     if ((self = [self initWithFrame:CGRectZero])) {
         self.activityIndicatorViewStyle = style;
+        
+        // Initialize image according to appearance proxy.
+        TYMActivityIndicatorView *appearance = [[self class] appearance];
+        UIImage *backgroundImage = [appearance backgroundImage];
+        if (backgroundImage) self.backgroundImage = backgroundImage;
+        UIImage *indicatorImage = [appearance indicatorImage];
+        if (indicatorImage) self.indicatorImage = indicatorImage;
+        
         [self sizeToFit];
     }
     
@@ -136,10 +152,12 @@
     CGSize size = self.bounds.size;
     CGSize backgroundImageSize = self.backgroundImageView.image.size;
     CGSize indicatorImageSize = self.indicatorImageView.image.size;
+    CGSize backgroundSize = self.backgroundView.frame.size;
     
     // Center
     self.backgroundImageView.frame = CGRectMake(roundf((size.width - backgroundImageSize.width) / 2.0f), roundf((size.height - backgroundImageSize.height) / 2.0f), backgroundImageSize.width, backgroundImageSize.height);
     self.indicatorImageView.frame = CGRectMake(roundf((size.width - indicatorImageSize.width) / 2.0f), roundf((size.height - indicatorImageSize.height) / 2.0f), indicatorImageSize.width, indicatorImageSize.height);
+    self.backgroundView.frame = CGRectMake(roundf((size.width - backgroundSize.width) / 2.0f), roundf((size.height - backgroundSize.height) / 2.0f), backgroundSize.width, backgroundSize.height);
 }
 
 
@@ -148,7 +166,7 @@
     CGSize backgroundImageSize = self.backgroundImageView.image.size;
     CGSize indicatorImageSize = self.indicatorImageView.image.size;
     
-    return CGSizeMake(fmaxf(backgroundImageSize.width, indicatorImageSize.width), fmaxf(backgroundImageSize.height, indicatorImageSize.height));
+    return CGSizeMake(MAX(backgroundImageSize.width, indicatorImageSize.width), MAX(backgroundImageSize.height, indicatorImageSize.height));
 }
 
 
@@ -195,12 +213,11 @@
 {
     self.userInteractionEnabled = NO;
     
-    _animating = NO;
-    _hidesWhenStopped = YES;
-    _fullRotationDuration = 1.0f;
-    _minProgressUnit = 0.01f;
+    self.animating = NO;
+    self.hidesWhenStopped = YES;
     _progress = 0.0f;
     
+    [self addSubview:self.backgroundView];
     [self addSubview:self.backgroundImageView];
     [self addSubview:self.indicatorImageView];
 }
