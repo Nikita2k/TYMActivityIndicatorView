@@ -31,7 +31,7 @@
 
 - (UIView *) backgroundView {
     if (!_backgroundView) {
-        _backgroundView = [[UIImageView alloc] initWithFrame:CGRectMake(-50, -50, 100, 100)];
+        _backgroundView = [[UIImageView alloc] initWithFrame:CGRectZero];
         _backgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _backgroundView.backgroundColor = [UIColor colorWithWhite:0.5 alpha:0.5];
         _backgroundView.layer.cornerRadius = 10;
@@ -62,6 +62,7 @@
 {
     _indicatorImage = indicatorImage;
     self.indicatorImageView.image = _indicatorImage;
+    _backgroundView.frame = CGRectMake(0, 0, _indicatorImage.size.width+16, _indicatorImage.size.height+16);
     [self setNeedsLayout];
 }
 
